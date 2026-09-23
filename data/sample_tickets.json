@@ -1,0 +1,20 @@
+[
+  {
+    "ticket_id": "T-1001",
+    "sender": "klient1@example.com",
+    "subject": "Ile trwa dostawa?",
+    "body": "Dzień dobry, zamówiłem produkt wczoraj, ile potrwa dostawa standardowa?"
+  },
+  {
+    "ticket_id": "T-1002",
+    "sender": "klient2@example.com",
+    "subject": "Uszkodzona przesyłka",
+    "body": "Otrzymałem produkt dzisiaj i jest uszkodzony w transporcie. Chcę złożyć reklamację i otrzymać zwrot pieniędzy."
+  },
+  {
+    "ticket_id": "T-1003",
+    "sender": "klient3@example.com",
+    "subject": "Nie mogę się zalogować",
+    "body": "Nie pamiętam hasła do swojego konta, jak mogę je zresetować?"
+  }
+]

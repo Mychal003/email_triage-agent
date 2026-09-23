@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+
+# stan checkpointera LangGraph (human_review interrupt/resume) - lokalny, per-dev
+data/checkpoints.sqlite
+data/checkpoints.sqlite-shm
+data/checkpoints.sqlite-wal
+
+# indeks Chroma - budowany z data/knowledge_base.json, nie trzeba go commitować
+data/chroma/
+CLAUDE.MD
+client_secret_349220101978-l3fbcit9tf9lore8av7q3mk2h9tc45jv.apps.googleusercontent.com.json
+
+# poświadczenia/token Gmail API (src/tools/gmail_client.py)
+client_secret*.json
+gmail_token.json

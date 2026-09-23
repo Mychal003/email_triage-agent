@@ -1,0 +1,122 @@
+[
+  {
+    "id": "kb-001",
+    "text": "Zwroty produktów są możliwe w ciągu 30 dni od zakupu, pod warunkiem zachowania oryginalnego opakowania i paragonu."
+  },
+  {
+    "id": "kb-002",
+    "text": "Czas dostawy standardowej wynosi 3-5 dni roboczych, a dostawy ekspresowej 1-2 dni robocze."
+  },
+  {
+    "id": "kb-003",
+    "text": "Aby zresetować hasło do konta, należy skorzystać z opcji 'Nie pamiętam hasła' na stronie logowania."
+  },
+  {
+    "id": "kb-004",
+    "text": "Reklamacje dotyczące uszkodzonego produktu należy zgłaszać w ciągu 14 dni od otrzymania przesyłki wraz ze zdjęciem uszkodzenia."
+  },
+  {
+    "id": "kb-005",
+    "text": "Darmowa dostawa obowiązuje dla zamówień o wartości powyżej 200 zł."
+  },
+  {
+    "id": "kb-006",
+    "text": "Płatność za zamówienie można wykonać kartą płatniczą, przelewem bankowym lub za pomocą BLIK."
+  },
+  {
+    "id": "kb-007",
+    "text": "Po złożeniu zamówienia klient otrzymuje potwierdzenie na adres e-mail podany podczas składania zamówienia."
+  },
+  {
+    "id": "kb-008",
+    "text": "Status przesyłki można sprawdzić po zalogowaniu na konto klienta w sekcji 'Moje zamówienia'."
+  },
+  {
+    "id": "kb-009",
+    "text": "Zmiana adresu dostawy jest możliwa tylko przed przekazaniem przesyłki firmie kurierskiej."
+  },
+  {
+    "id": "kb-010",
+    "text": "W przypadku braku produktu w magazynie klient otrzyma wiadomość e-mail z informacją o przewidywanym terminie dostępności."
+  },
+  {
+    "id": "kb-011",
+    "text": "Konto klienta można usunąć w ustawieniach profilu po zalogowaniu do serwisu."
+  },
+  {
+    "id": "kb-012",
+    "text": "Hasło do konta powinno zawierać co najmniej 8 znaków, w tym jedną wielką literę i jedną cyfrę."
+  },
+  {
+    "id": "kb-013",
+    "text": "W przypadku opóźnienia dostawy należy skontaktować się z działem obsługi klienta i podać numer zamówienia."
+  },
+  {
+    "id": "kb-014",
+    "text": "Produkty objęte promocją mogą podlegać innym zasadom zwrotu, które są opisane w regulaminie danej promocji."
+  },
+  {
+    "id": "kb-015",
+    "text": "Fakturę VAT można pobrać z poziomu szczegółów zamówienia po jego opłaceniu."
+  },
+  {
+    "id": "kb-016",
+    "text": "W przypadku otrzymania niewłaściwego produktu należy skontaktować się z obsługą klienta i podać numer zamówienia oraz nazwę otrzymanego produktu."
+  },
+  {
+    "id": "kb-017",
+    "text": "Przesyłki ekspresowe są realizowane od poniedziałku do piątku z wyłączeniem dni ustawowo wolnych od pracy."
+  },
+  {
+    "id": "kb-018",
+    "text": "Minimalna wartość zamówienia wynosi 50 zł."
+  },
+  {
+    "id": "kb-019",
+    "text": "Kod rabatowy można wykorzystać podczas składania zamówienia w polu 'Kod promocyjny'."
+  },
+  {
+    "id": "kb-020",
+    "text": "Jeden kod rabatowy może zostać wykorzystany tylko raz na jedno zamówienie."
+  },
+  {
+    "id": "kb-021",
+    "text": "Jeżeli płatność za zamówienie nie zostanie potwierdzona w ciągu 24 godzin, zamówienie może zostać automatycznie anulowane."
+  },
+  {
+    "id": "kb-022",
+    "text": "Dział obsługi klienta jest dostępny od poniedziałku do piątku w godzinach 8:00-18:00."
+  },
+  {
+    "id": "kb-023",
+    "text": "W przypadku problemów z logowaniem należy sprawdzić poprawność adresu e-mail oraz hasła i upewnić się, że klawisz Caps Lock jest wyłączony."
+  },
+  {
+    "id": "kb-024",
+    "text": "Zamówienie można anulować przed jego wysłaniem, kontaktując się z działem obsługi klienta."
+  },
+  {
+    "id": "kb-025",
+    "text": "Zwrot pieniędzy za zaakceptowany zwrot jest realizowany w ciągu 7 dni roboczych od momentu przyjęcia produktu przez magazyn."
+  },
+  {
+    "id": "kb-026",
+    "text": "W przypadku płatności kartą zwrot środków jest kierowany na kartę używaną podczas składania zamówienia."
+  },
+  {
+    "id": "kb-027",
+    "text": "Produkty elektroniczne są objęte 24-miesięczną gwarancją producenta."
+  },
+  {
+    "id": "kb-028",
+    "text": "Do zgłoszenia reklamacyjnego należy dołączyć numer zamówienia oraz opis problemu."
+  },
+  {
+    "id": "kb-029",
+    "text": "Numer zamówienia znajduje się w wiadomości e-mail z potwierdzeniem zamówienia oraz w sekcji 'Moje zamówienia'."
+  },
+  {
+    "id": "kb-030",
+    "text": "Nieodebrana przesyłka może zostać zwrócona do magazynu, a ponowne wysłanie zamówienia może wymagać opłacenia dodatkowego kosztu dostawy."
+  }
+]
