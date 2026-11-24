@@ -17,6 +17,19 @@ GENERATE_MODEL_NAME = os.getenv("GENERATE_MODEL_NAME", "claude-sonnet-5")
 # Poniżej tego progu pewności klasyfikacji -> eskalacja do człowieka
 CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.85"))
 
+# Pełna, zamknięta lista kategorii klasyfikacji. Kategoria spoza tej listy
+# (np. literówka modelu) jest traktowana jako nieznana -> przegląd człowieka
+# (patrz src/nodes/classify.py i src/nodes/route.py).
+CATEGORIES = (
+    "pytanie_produktowe",
+    "reklamacja",
+    "zwrot_pieniedzy",
+    "sprawa_prawna",
+    "rezygnacja_z_uslugi",
+    "spam",
+    "inne",
+)
+
 # Kategorie, które ZAWSZE trafiają do przeglądu człowieka,
 # niezależnie od pewności klasyfikacji (bo są wysokiego ryzyka)
 SENSITIVE_CATEGORIES = {

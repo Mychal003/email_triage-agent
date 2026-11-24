@@ -1,14 +1,3 @@
-"""UI w Streamlit do przeglądu i akceptacji zgłoszeń oczekujących w
-`human_review` (kolejny krok rozwoju z README - patrz "Kolejne kroki
-rozwoju").
-
-Uruchomienie:
-    streamlit run streamlit_app.py
-
-Współdzieli checkpointer (`data/checkpoints.sqlite`) z `app.py`, więc
-zgłoszenie wysłane do przeglądu z CLI można tutaj zaakceptować albo odrzucić.
-"""
-
 import json
 import sqlite3
 
