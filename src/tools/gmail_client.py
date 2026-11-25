@@ -1,12 +1,3 @@
-"""Klient Gmail API - odczyt nieprzeczytanych wiadomości jako zgłoszeń
-(kolejny krok rozwoju z README - zamiast `data/sample_tickets.json`).
-
-Zakres celowo ograniczony do odczytu (`gmail.readonly`): agent nigdy nie
-wysyła ani nie modyfikuje (np. nie oznacza jako przeczytane) niczego na
-koncie przez ten moduł. Realna wysyłka to osobny, jeszcze niezrealizowany
-krok w `src/nodes/send.py`.
-"""
-
 import base64
 import os.path
 from typing import List

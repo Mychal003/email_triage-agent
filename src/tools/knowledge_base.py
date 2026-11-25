@@ -1,8 +1,3 @@
-"""Retriever nad bazą wiedzy oparty o wektorową bazę Chroma (embeddingi
-semantyczne) zamiast prostego nakładania się słów kluczowych - patrz
-README "Kolejne kroki rozwoju".
-"""
-
 import json
 from pathlib import Path
 from typing import List

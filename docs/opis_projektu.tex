@@ -1,0 +1,653 @@
+% Opis techniczny projektu Email Triage Agent
+% Kompilacja: Overleaf, kompilator pdfLaTeX (domyślny)
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,fit,babel}
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  urlcolor=blue!50!black,
+  pdftitle={Email Triage Agent - opis techniczny},
+}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.6em}
+\setlist{itemsep=0.2em}
+
+% --- kolory i styl listingów ---
+\definecolor{codebg}{RGB}{246,246,246}
+\definecolor{codekw}{RGB}{0,70,140}
+\definecolor{codestr}{RGB}{150,40,40}
+\definecolor{codecom}{RGB}{90,110,90}
+
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codekw}\bfseries,
+  stringstyle=\color{codestr},
+  commentstyle=\color{codecom}\itshape,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{black!20},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  xleftmargin=0.5em,
+  xrightmargin=0.5em,
+  aboveskip=0.8em,
+  belowskip=0.8em,
+  extendedchars=true,
+  literate=
+    {ą}{{\k{a}}}1 {ć}{{\'c}}1 {ę}{{\k{e}}}1 {ł}{{\l{}}}1 {ń}{{\'n}}1
+    {ó}{{\'o}}1 {ś}{{\'s}}1 {ź}{{\'z}}1 {ż}{{\.z}}1
+    {Ą}{{\k{A}}}1 {Ć}{{\'C}}1 {Ę}{{\k{E}}}1 {Ł}{{\L{}}}1 {Ń}{{\'N}}1
+    {Ó}{{\'O}}1 {Ś}{{\'S}}1 {Ź}{{\'Z}}1 {Ż}{{\.Z}}1,
+}
+
+\newcommand{\plik}[1]{\texttt{#1}}
+
+% --- style diagramów ---
+\tikzset{
+  wezel/.style={rectangle, rounded corners=3pt, draw=black!70, fill=blue!8,
+    minimum width=2.8cm, minimum height=0.9cm, align=center, font=\small},
+  llm/.style={wezel, fill=orange!15},
+  koniec/.style={wezel, fill=black!8},
+  start/.style={ellipse, draw=black!70, fill=green!10, minimum height=0.8cm,
+    align=center, font=\small},
+  zew/.style={rectangle, draw=black!60, dashed, fill=yellow!10, align=center,
+    font=\small, minimum height=0.9cm},
+  strz/.style={-{Stealth[length=2.2mm]}, thick, black!70},
+  etykieta/.style={font=\footnotesize, fill=white, inner sep=1.5pt},
+}
+
+\title{\textbf{Email Triage Agent}\\[0.3em]
+\large Agent AI do automatycznej obsługi zgłoszeń klientów\\
+z weryfikacją przez człowieka (human-in-the-loop)}
+\author{Michał Pawlik}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+% =====================================================================
+\section{Cel projektu}
+
+Firmy dostają codziennie dziesiątki lub setki maili od klientów. Duża część
+z nich to powtarzalne pytania (np. \emph{,,ile trwa dostawa?''}), na które
+odpowiedź jest zawsze podobna. Część jest jednak wrażliwa (reklamacja, zwrot
+pieniędzy, sprawa prawna) i na nią nie powinien odpowiadać automat bez
+nadzoru.
+
+\textbf{Email Triage Agent} to program, który dla każdego przychodzącego
+zgłoszenia:
+
+\begin{enumerate}
+  \item \textbf{klasyfikuje} je, czyli określa jego kategorię i to, jak
+        pewna jest ta klasyfikacja,
+  \item \textbf{wyszukuje} w bazie wiedzy firmy fakty potrzebne do odpowiedzi
+        (technika RAG),
+  \item \textbf{pisze szkic odpowiedzi} na podstawie znalezionych faktów,
+  \item \textbf{decyduje}, czy odpowiedź może zostać wysłana automatycznie,
+        czy musi ją najpierw zatwierdzić człowiek.
+\end{enumerate}
+
+Spam i phishing są rozpoznawane na samym początku i odrzucane bez
+generowania jakiejkolwiek odpowiedzi.
+
+Najważniejsza idea projektu: \textbf{automat obsługuje tylko to, co jest
+bezpieczne i jednoznaczne, a wszystko inne przekazuje człowiekowi}.
+
+% =====================================================================
+\section{Wykorzystane technologie}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\textbf{Technologia} & \textbf{Do czego służy w projekcie} \\
+\midrule
+Python 3 & Język, w którym napisany jest cały program. \\
+LangGraph & Biblioteka do budowy agentów jako \emph{grafu kroków}. Definiuje
+  kolejność kroków, warunki rozgałęzień oraz pauzę na decyzję człowieka. \\
+LangChain + Claude (Anthropic) & Wywołania modeli językowych. Claude Haiku
+  klasyfikuje zgłoszenia, Claude Sonnet pisze odpowiedzi. \\
+ChromaDB & Wektorowa baza danych, w której przechowywana jest baza wiedzy
+  do wyszukiwania semantycznego. \\
+sentence-transformers & Lokalny model zamieniający tekst na wektor liczb
+  (embedding); obsługuje język polski. \\
+SQLite & Trwały zapis stanu każdego zgłoszenia (tzw. checkpointer). \\
+Streamlit & Prosty interfejs webowy dla człowieka zatwierdzającego odpowiedzi. \\
+Gmail API & Opcjonalne źródło prawdziwych maili (tylko odczyt). \\
+pytest & Testy automatyczne. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% =====================================================================
+\section{Architektura: agent jako graf}
+
+\subsection{Czym jest graf w LangGraph}
+
+Program nie jest jednym dużym skryptem, tylko \textbf{grafem}, w którym:
+
+\begin{itemize}
+  \item \textbf{węzeł} (ang. \emph{node}) to jeden krok przetwarzania,
+        zaimplementowany jako zwykła funkcja Pythona,
+  \item \textbf{krawędź} (ang. \emph{edge}) mówi, który krok wykonuje się
+        po którym,
+  \item \textbf{krawędź warunkowa} wybiera następny krok na podstawie
+        dotychczasowych wyników (np. ,,jeśli spam, to idź do \texttt{skip}'').
+\end{itemize}
+
+Wszystkie węzły pracują na jednym wspólnym obiekcie, czyli \textbf{stanie}
+zgłoszenia (rozdział~\ref{sec:stan}). Każdy węzeł dostaje stan, dopisuje do
+niego swoje wyniki i oddaje go dalej.
+
+\subsection{Schemat grafu}
+
+Rysunek~\ref{fig:graf} pokazuje pełny przepływ zgłoszenia. Węzły na
+pomarańczowo wywołują model językowy (kosztują), węzły na niebiesko to zwykły
+kod Pythona.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[node distance=0.75cm]
+  \node[start]                               (in)   {Nowe zgłoszenie};
+  \node[llm, below=of in]                    (cls)  {\textbf{classify}\\ \footnotesize klasyfikacja};
+  \node[wezel, below=of cls]                 (ret)  {\textbf{retrieve}\\ \footnotesize wyszukanie w bazie wiedzy};
+  \node[llm, below=of ret]                   (gen)  {\textbf{generate}\\ \footnotesize szkic odpowiedzi};
+  \node[wezel, below=of gen]                 (rou)  {\textbf{route}\\ \footnotesize decyzja};
+  \node[wezel, below left=1.0cm and 0.6cm of rou]  (snd)  {\textbf{send}\\ \footnotesize status: sent};
+  \node[wezel, below right=1.0cm and 0.6cm of rou] (hr)   {\textbf{human\_review}\\ \footnotesize pauza};
+  \node[wezel, left=3.0cm of ret]            (skp)  {\textbf{skip}\\ \footnotesize status: ignored};
+  \node[koniec, below=3.2cm of rou]          (end)  {KONIEC};
+  \node[zew, right=1.0cm of hr]              (ui)   {Człowiek\\w Streamlit};
+
+  \draw[strz] (in) -- (cls);
+  \draw[strz] (cls) -- node[etykieta, right] {pozostałe} (ret);
+  \draw[strz] (cls) -| node[etykieta, pos=0.25, above] {spam} (skp);
+  \draw[strz] (ret) -- (gen);
+  \draw[strz] (gen) -- (rou);
+  \draw[strz] (rou) -- node[etykieta, left, pos=0.4] {auto} (snd);
+  \draw[strz] (rou) -- node[etykieta, right, pos=0.4] {human\_review} (hr);
+  \draw[strz] (snd) |- (end);
+  \draw[strz] (hr)  |- node[etykieta, pos=0.25, right] {sent / rejected} (end);
+  \draw[strz] (skp) |- (end);
+  \draw[strz, dashed] ([yshift=2mm]hr.east) -- node[etykieta, above] {\footnotesize interrupt()} ([yshift=2mm]ui.west);
+  \draw[strz, dashed] ([yshift=-2mm]ui.west) -- node[etykieta, below] {\footnotesize resume} ([yshift=-2mm]hr.east);
+\end{tikzpicture}
+\caption{Graf agenta. Pomarańczowe węzły wywołują model Claude.}
+\label{fig:graf}
+\end{figure}
+
+Graf budowany jest w pliku \plik{src/graph.py}. Fragment definicji:
+
+\begin{lstlisting}
+graph.set_entry_point("classify")
+graph.add_conditional_edges("classify", classify_condition,
+                            {"spam": "skip", "process": "retrieve"})
+graph.add_edge("retrieve", "generate")
+graph.add_edge("generate", "route")
+graph.add_conditional_edges("route", route_condition,
+                            {"auto": "send", "human_review": "human_review"})
+\end{lstlisting}
+
+% =====================================================================
+\section{Stan zgłoszenia}
+\label{sec:stan}
+
+Stan to słownik Pythona (\texttt{TypedDict}) zdefiniowany w
+\plik{src/state.py}. Na początku zawiera tylko dane maila, a z każdym
+krokiem dochodzą nowe pola:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{4.2cm} >{\raggedright\arraybackslash}p{2.6cm} X@{}}
+\toprule
+\textbf{Pole} & \textbf{Ustawia} & \textbf{Znaczenie} \\
+\midrule
+\texttt{ticket\_id}, \texttt{sender}, \texttt{subject}, \texttt{body}
+  & wejście & identyfikator, nadawca, temat i treść maila \\
+\texttt{category} & classify & kategoria zgłoszenia \\
+\texttt{confidence} & classify & pewność klasyfikacji, liczba od 0 do 1 \\
+\texttt{retrieved\_context} & retrieve & fragmenty bazy wiedzy pasujące do maila \\
+\texttt{draft\_reply} & generate & szkic odpowiedzi \\
+\texttt{route\_decision} & route & \texttt{auto} albo \texttt{human\_review} \\
+\texttt{status} & send / skip / human\_review & \texttt{sent}, \texttt{rejected}
+  albo \texttt{ignored} \\
+\texttt{audit\_log} & każdy węzeł & lista wpisów opisujących decyzje agenta \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\textbf{Log audytowy} (\texttt{audit\_log}) jest ważny z punktu widzenia
+bezpieczeństwa: dla każdego zgłoszenia da się potem odtworzyć, \emph{dlaczego}
+agent podjął taką, a nie inną decyzję.
+
+% =====================================================================
+\section{Kroki agenta po kolei}
+
+Każdy krok to osobny plik w katalogu \plik{src/nodes/}. Każdy węzeł ma tę samą
+budowę: przyjmuje stan, dopisuje swoje pola i wpis do logu, zwraca nowy stan.
+
+\subsection{Krok 1: classify (klasyfikacja)}
+
+\textbf{Plik:} \plik{src/nodes/classify.py}\quad
+\textbf{Model:} Claude Haiku (tani i szybki), \texttt{temperature=0}
+
+Model dostaje temat i treść maila oraz polecenie, by odpowiedział
+\emph{wyłącznie} JSON-em z kategorią i pewnością, np.:
+
+\begin{lstlisting}
+{"category": "reklamacja", "confidence": 0.93}
+\end{lstlisting}
+
+Dozwolone kategorie (zdefiniowane w \plik{src/config.py}):
+\texttt{pytanie\_produktowe}, \texttt{reklamacja}, \texttt{zwrot\_pieniedzy},
+\texttt{sprawa\_prawna}, \texttt{rezygnacja\_z\_uslugi}, \texttt{spam},
+\texttt{inne}.
+
+\textbf{Dlaczego Haiku i temperatura 0?} Klasyfikacja to proste zadanie
+z zamkniętą listą odpowiedzi, więc nie potrzeba najdroższego modelu.
+Temperatura 0 sprawia, że model odpowiada możliwie powtarzalnie.
+
+\textbf{Zabezpieczenia przed błędną odpowiedzią modelu.} Model językowy nie
+zawsze trzyma się instrukcji, więc odpowiedź jest sprawdzana, zanim zostanie
+użyta:
+
+\begin{itemize}
+  \item z odpowiedzi wycinany jest fragment od pierwszego \texttt{\{} do
+        ostatniego \texttt{\}}, więc tekst dookoła JSON-a (np. znaczniki
+        Markdown) nie przeszkadza,
+  \item kategoria jest normalizowana: \texttt{Reklamacja} staje się
+        \texttt{reklamacja}, a \texttt{Zwrot pieniedzy} staje się
+        \texttt{zwrot\_pieniedzy},
+  \item pewność, która nie jest liczbą, zamieniana jest na 0, a wartość
+        spoza zakresu 0--1 jest do niego przycinana,
+  \item jeśli odpowiedzi \textbf{nie da się odczytać} albo kategoria jest
+        \textbf{spoza listy}, agent nie przerywa pracy. Ustawia kategorię
+        \texttt{inne} i pewność 0, więc zgłoszenie na pewno trafi do
+        człowieka. W logu zapisywana jest przyczyna.
+\end{itemize}
+
+\textbf{Odcięcie spamu.} Zaraz po klasyfikacji funkcja
+\texttt{classify\_condition} sprawdza, czy kategoria to \texttt{spam}. Jeśli
+tak, zgłoszenie od razu idzie do węzła \texttt{skip}, z pominięciem reszty
+grafu. Powody są dwa: odpowiedź na phishing potwierdziłaby oszustowi, że
+skrzynka jest aktywna, a generowanie odpowiedzi na spam to niepotrzebny koszt.
+
+\subsection{Krok 2: retrieve (wyszukiwanie w bazie wiedzy, RAG)}
+
+\textbf{Pliki:} \plik{src/nodes/retrieve.py},
+\plik{src/tools/knowledge_base.py}\quad
+\textbf{Dane:} \plik{data/knowledge_base.json} (30 krótkich faktów o firmie)
+
+\textbf{RAG} (\emph{Retrieval-Augmented Generation}) oznacza, że zanim model
+napisze odpowiedź, program wyszukuje dla niego właściwe informacje. Dzięki
+temu model opiera się na faktach z firmy, a nie na swojej ogólnej wiedzy.
+
+Jak działa wyszukiwanie:
+
+\begin{enumerate}
+  \item Przy starcie programu każdy wpis bazy wiedzy zamieniany jest na
+        \textbf{embedding}, czyli wektor liczb opisujący \emph{znaczenie}
+        tekstu. Wektory zapisywane są w bazie Chroma (\plik{data/chroma/}).
+  \item Temat i treść maila też zamieniane są na wektor.
+  \item Chroma zwraca 3 wpisy, których wektory są najbliżej wektora maila,
+        czyli wpisy o najbardziej zbliżonym znaczeniu.
+\end{enumerate}
+
+Przykład: mail \emph{,,Kiedy dotrze moje zamówienie?''} znajdzie wpis
+\emph{,,Czas dostawy standardowej wynosi 3--5 dni roboczych\ldots''}, choć
+nie mają prawie żadnych wspólnych słów. Tym różni się wyszukiwanie
+semantyczne od zwykłego szukania słów kluczowych.
+
+Użyty model embeddingów to \texttt{paraphrase-multilingual-MiniLM-L12-v2}.
+Działa lokalnie, bez klucza API, i obsługuje język polski. Domyślny model
+Chroma jest anglojęzyczny i w testach źle dopasowywał polskie pytania.
+
+\subsection{Krok 3: generate (pisanie odpowiedzi)}
+
+\textbf{Plik:} \plik{src/nodes/generate.py}\quad
+\textbf{Model:} Claude Sonnet (lepsza jakość języka)
+
+Model dostaje kategorię, treść maila i fragmenty z bazy wiedzy. Prompt
+zawiera dwie kluczowe zasady ograniczające tzw. \textbf{halucynacje}
+(zmyślanie faktów przez model):
+
+\begin{itemize}
+  \item używaj \emph{wyłącznie} faktów z podanego kontekstu i nie dodawaj
+        warunków ani terminów, których w nim nie ma,
+  \item jeśli kontekst nie odpowiada na pytanie klienta, napisz to wprost,
+        zamiast zgadywać.
+\end{itemize}
+
+Szczegół techniczny: model Sonnet może najpierw ,,myśleć'' (tzw. adaptive
+thinking) i zwrócić odpowiedź jako listę bloków (blok myślenia i blok
+tekstu). Funkcja \texttt{\_extract\_text()} wybiera z niej tylko właściwy
+tekst odpowiedzi.
+
+\subsection{Krok 4: route (decyzja: automat czy człowiek)}
+
+\textbf{Plik:} \plik{src/nodes/route.py}
+
+To najważniejszy krok z punktu widzenia bezpieczeństwa. Nie korzysta z modelu
+językowego, tylko z prostych, przewidywalnych reguł:
+
+\begin{lstlisting}
+is_unknown        = category not in CATEGORIES
+is_sensitive      = category in SENSITIVE_CATEGORIES
+is_low_confidence = confidence < CONFIDENCE_THRESHOLD   # 0.85
+
+decision = "human_review" if (is_unknown or is_sensitive
+                              or is_low_confidence) else "auto"
+\end{lstlisting}
+
+Kategorie wrażliwe, które \textbf{zawsze} trafiają do człowieka, niezależnie
+od pewności: \texttt{reklamacja}, \texttt{zwrot\_pieniedzy},
+\texttt{sprawa\_prawna}, \texttt{rezygnacja\_z\_uslugi}.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}l c l@{}}
+\toprule
+\textbf{Przykład} & \textbf{Pewność} & \textbf{Decyzja} \\
+\midrule
+pytanie\_produktowe & 0.95 & auto (wysłane automatycznie) \\
+pytanie\_produktowe & 0.60 & human\_review (niska pewność) \\
+reklamacja          & 0.99 & human\_review (kategoria wrażliwa) \\
+nieznana kategoria  & --   & human\_review (nieznana kategoria) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Próg pewności można zmienić bez ruszania kodu, przez zmienną
+\texttt{CONFIDENCE\_THRESHOLD} w pliku \plik{.env}.
+
+\subsection{Krok 5: zakończenie (send, skip, human\_review)}
+
+\textbf{Plik:} \plik{src/nodes/send.py}
+
+\begin{itemize}
+  \item \textbf{send}: ustawia status \texttt{sent}. Na tym etapie projektu
+        jest to symulacja, a podłączenie prawdziwej wysyłki maili to
+        planowany kolejny krok.
+  \item \textbf{skip}: dla spamu ustawia status \texttt{ignored}. Odpowiedź
+        nie jest nawet generowana.
+  \item \textbf{human\_review}: zatrzymuje agenta i czeka na człowieka.
+        Opisane dokładnie w następnym rozdziale.
+\end{itemize}
+
+% =====================================================================
+\section{Human-in-the-loop: jak agent czeka na człowieka}
+
+\subsection{Pauza i wznowienie}
+
+Węzeł \texttt{human\_review} wywołuje funkcję \texttt{interrupt()}
+z LangGraph. Działa ona jak ,,pauza'': wykonanie grafu zatrzymuje się w tym
+miejscu, a dane do przeglądu (nadawca, temat, kategoria, szkic odpowiedzi)
+zostają przekazane na zewnątrz.
+
+\begin{lstlisting}
+decision = interrupt({
+    "ticket_id": state["ticket_id"],
+    "category": state.get("category"),
+    "draft_reply": state.get("draft_reply"),
+    ...
+})
+# tutaj program wraca dopiero po decyzji człowieka
+\end{lstlisting}
+
+Człowiek w interfejsie Streamlit czyta szkic, może go poprawić, i klika
+,,Zaakceptuj'' albo ,,Odrzuć''. Interfejs wznawia wtedy graf specjalnym
+poleceniem:
+
+\begin{lstlisting}
+agent.invoke(Command(resume={"approved": True,
+                             "edited_reply": poprawiony_tekst}), config)
+\end{lstlisting}
+
+Funkcja \texttt{interrupt()} ,,zwraca'' wtedy tę decyzję, a węzeł ustawia
+status \texttt{sent} (zaakceptowano) albo \texttt{rejected} (odrzucono).
+
+\subsection{Checkpointer: pamięć między programami}
+
+Żeby pauza mogła trwać dowolnie długo, a wznowienie nastąpić \emph{w innym
+programie}, stan każdego zgłoszenia jest zapisywany na dysku w bazie SQLite
+(\plik{data/checkpoints.sqlite}). Odpowiada za to tzw. \textbf{checkpointer}
+(\plik{src/checkpointer.py}).
+
+Każde zgłoszenie ma własny wątek (\texttt{thread\_id}) równy jego
+identyfikatorowi (\texttt{ticket\_id}). Dzięki temu można np.:
+
+\begin{enumerate}
+  \item uruchomić \plik{app.py}, który przetworzy maile i zostawi reklamację
+        ,,w pauzie'',
+  \item zamknąć program,
+  \item później uruchomić \plik{streamlit\_app.py}, który odczyta z bazy to
+        samo zgłoszenie i pozwoli je dokończyć.
+\end{enumerate}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[node distance=1.2cm]
+  \node[wezel, minimum width=3.2cm] (app) {\plik{app.py}\\ \footnotesize lub \plik{gmail\_app.py}};
+  \node[koniec, cylinder, shape border rotate=90, aspect=0.25,
+        minimum width=3.2cm, minimum height=1.4cm, right=1.6cm of app] (db)
+        {\plik{checkpoints.sqlite}};
+  \node[wezel, minimum width=3.2cm, right=1.6cm of db] (st) {\plik{streamlit\_app.py}};
+  \node[wezel, minimum width=3.2cm, below=1.0cm of db] (met) {\plik{metrics.py}};
+
+  \draw[strz] (app) -- node[etykieta, above] {zapis} (db);
+  \draw[strz, {Stealth[length=2.2mm]}-{Stealth[length=2.2mm]}] (db) -- node[etykieta, above] {odczyt / wznowienie} (st);
+  \draw[strz] (db) -- node[etykieta, right] {odczyt} (met);
+\end{tikzpicture}
+\caption{Programy współdzielą stan zgłoszeń przez jedną bazę SQLite.}
+\end{figure}
+
+% =====================================================================
+\section{Programy do uruchomienia}
+
+\subsection{Źródła zgłoszeń}
+
+Oba programy wejściowe korzystają z tej samej pętli (\plik{src/cli.py}),
+która przepuszcza każde zgłoszenie przez graf i wypisuje wynik w terminalu.
+
+\begin{itemize}
+  \item \plik{app.py}: wersja demonstracyjna. Czyta 3 przykładowe
+        zgłoszenia z \plik{data/sample_tickets.json}: pytanie o dostawę,
+        reklamację uszkodzonej przesyłki i pytanie o reset hasła.
+  \item \plik{gmail\_app.py}: czyta prawdziwe, nieprzeczytane maile ze
+        skrzynki Gmail (\plik{src/tools/gmail\_client.py}). Logowanie odbywa
+        się przez OAuth z uprawnieniem \textbf{tylko do odczytu}
+        (\texttt{gmail.readonly}), więc agent fizycznie nie może niczego
+        wysłać, usunąć ani oznaczyć jako przeczytane.
+\end{itemize}
+
+\subsection{Interfejs przeglądu (Streamlit)}
+
+\plik{streamlit\_app.py} to prosta strona w przeglądarce. Pokazuje listę
+zgłoszeń, przy czym czekające na decyzję oznaczone są jako ,,[czeka]'' i
+wyświetlane na górze. Dla wybranego zgłoszenia widać treść maila, kategorię,
+pewność, edytowalny szkic odpowiedzi, przyciski decyzji oraz log audytowy.
+
+\subsection{Metryki}
+
+\plik{metrics.py} odczytuje z bazy SQLite wszystkie dotąd przetworzone
+zgłoszenia i podaje statystyki: jaki procent obsłużono w pełni automatycznie,
+ile trafiło do człowieka, ile odrzucono jako spam, rozkład kategorii oraz
+średnią pewność klasyfikacji.
+
+\subsection{Polecenia}
+
+\begin{lstlisting}[language=bash]
+pip install -r requirements.txt     # instalacja bibliotek
+# w pliku .env ustawić ANTHROPIC_API_KEY=...
+
+python app.py                       # agent na przykładowych zgłoszeniach
+streamlit run streamlit_app.py      # panel akceptacji w przeglądarce
+python metrics.py                   # statystyki
+pytest                              # testy
+\end{lstlisting}
+
+% =====================================================================
+\section{Przykładowy przebieg}
+
+Poniżej log audytowy dwóch przykładowych zgłoszeń (wartości pewności są
+przykładowe, w praktyce zależą od odpowiedzi modelu).
+
+\textbf{T-1001, ,,Ile trwa dostawa?''}, czyli obsługa w pełni automatyczna:
+
+\begin{lstlisting}[language={}]
+[classify] kategoria=pytanie_produktowe pewność=0.95
+[retrieve] znaleziono 3 fragmentów kontekstu
+[generate] wygenerowano szkic odpowiedzi
+[route] decyzja=auto (wysoka pewność, kategoria bezpieczna)
+[send] wysłano odpowiedź do klient1@example.com
+\end{lstlisting}
+
+\textbf{T-1002, ,,Uszkodzona przesyłka''}, czyli przegląd przez człowieka:
+
+\begin{lstlisting}[language={}]
+[classify] kategoria=reklamacja pewność=0.95
+[retrieve] znaleziono 3 fragmentów kontekstu
+[generate] wygenerowano szkic odpowiedzi
+[route] decyzja=human_review (kategoria wrażliwa)
+      ... pauza, decyzja człowieka w Streamlit ...
+[human_review] zaakceptowano przez człowieka - wysłano do klient2@example.com
+\end{lstlisting}
+
+% =====================================================================
+\section{Konfiguracja}
+
+Ustawienia wczytywane są z pliku \plik{.env} (\plik{src/config.py}), więc
+zachowanie agenta można zmieniać bez modyfikowania kodu.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+\textbf{Zmienna} & \textbf{Domyślnie} & \textbf{Znaczenie} \\
+\midrule
+\texttt{ANTHROPIC\_API\_KEY} & -- & klucz API do modeli Claude (wymagany) \\
+\texttt{CLASSIFY\_MODEL\_NAME} & \texttt{claude-haiku-4-5} & model do klasyfikacji \\
+\texttt{GENERATE\_MODEL\_NAME} & \texttt{claude-sonnet-5} & model do pisania odpowiedzi \\
+\texttt{CONFIDENCE\_THRESHOLD} & \texttt{0.85} & próg pewności dla automatu \\
+\texttt{GMAIL\_QUERY} & \texttt{is:unread in:inbox} & które maile pobierać z Gmaila \\
+\texttt{GMAIL\_MAX\_RESULTS} & \texttt{10} & ile maili pobrać naraz \\
+\texttt{LANGSMITH\_TRACING} & wyłączone & opcjonalny podgląd każdego kroku w LangSmith \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Pliki z kluczami (\plik{.env}, token Gmaila, \plik{client\_secret*.json})
+są wykluczone z repozytorium Git (\plik{.gitignore}).
+
+% =====================================================================
+\section{Testy}
+
+\begin{itemize}
+  \item \plik{tests/test\_classify.py}: testy jednostkowe bez wywołań
+        modelu, szybkie i powtarzalne. Sprawdzają odczytywanie JSON-a
+        (poprawnego, otoczonego tekstem i całkowicie błędnego), normalizację
+        kategorii i pewności oraz to, że nieznana kategoria lub błędna
+        odpowiedź modelu zawsze kończy się przeglądem przez człowieka.
+  \item \plik{tests/test\_graph.py}: testy całego grafu na prawdziwym
+        modelu Claude. Bezpieczne pytanie przechodzi do końca; reklamacja
+        zatrzymuje się na \texttt{human\_review} i może zostać odrzucona;
+        phishing kończy się statusem \texttt{ignored} bez żadnej odpowiedzi.
+\end{itemize}
+
+% =====================================================================
+\section{Mechanizmy bezpieczeństwa: podsumowanie}
+
+\begin{enumerate}
+  \item \textbf{Kategorie wrażliwe zawsze trafiają do człowieka}, nawet przy
+        100\% pewności modelu.
+  \item \textbf{Niska pewność trafia do człowieka.} Automat działa tylko
+        w jednoznacznych przypadkach.
+  \item \textbf{Nieznana kategoria lub nieczytelna odpowiedź modelu trafia
+        do człowieka.} W razie wątpliwości decyduje człowiek, a program się
+        nie zawiesza.
+  \item \textbf{Spam i phishing nie dostają odpowiedzi.}
+  \item \textbf{Odpowiedzi opierają się na bazie wiedzy (RAG)}, a prompt
+        zabrania dopisywania faktów spoza niej.
+  \item \textbf{Decyzja o wysyłce jest podejmowana regułami w kodzie}, a nie
+        przez model, więc jest przewidywalna i łatwa do sprawdzenia.
+  \item \textbf{Log audytowy} dla każdego zgłoszenia.
+  \item \textbf{Gmail tylko do odczytu}, więc agent nie może niczego zmienić
+        na koncie.
+\end{enumerate}
+
+% =====================================================================
+\section{Ograniczenia i możliwy dalszy rozwój}
+
+\begin{itemize}
+  \item \textbf{Wysyłka jest symulowana.} Węzeł \texttt{send} tylko ustawia
+        status. Kolejnym krokiem jest podłączenie wysyłki przez Gmail API.
+  \item \textbf{Pewność to samoocena modelu.} Liczbę \texttt{confidence}
+        model podaje sam, więc nie jest to prawdopodobieństwo w sensie
+        statystycznym. Próg warto dobrać na podstawie większej liczby
+        rzeczywistych maili.
+  \item \textbf{Mała baza wiedzy.} 30 wpisów wystarcza do demonstracji;
+        w realnym zastosowaniu bazę można zasilić np. dokumentami firmy.
+  \item \textbf{Testy end-to-end korzystają z prawdziwego modelu}, więc
+        kosztują i mogą dawać nieco różne wyniki między uruchomieniami.
+\end{itemize}
+
+% =====================================================================
+\section{Struktura plików}
+
+\begin{lstlisting}[language={}]
+email-triage-agent/
+  app.py                 # uruchomienie na przykładowych zgłoszeniach
+  gmail_app.py           # uruchomienie na mailach z Gmaila
+  streamlit_app.py       # panel akceptacji dla człowieka
+  metrics.py             # statystyki
+  requirements.txt       # lista bibliotek
+  .env.example           # wzór pliku konfiguracyjnego
+  data/
+    sample_tickets.json  # 3 przykładowe zgłoszenia
+    knowledge_base.json  # baza wiedzy (30 faktów)
+  src/
+    state.py             # definicja stanu zgłoszenia
+    graph.py             # budowa grafu agenta
+    config.py            # konfiguracja, progi, kategorie
+    checkpointer.py      # zapis stanu w SQLite
+    cli.py               # wspólna pętla przetwarzania
+    nodes/
+      classify.py        # krok 1: klasyfikacja
+      retrieve.py        # krok 2: wyszukiwanie (RAG)
+      generate.py        # krok 3: szkic odpowiedzi
+      route.py           # krok 4: decyzja auto / człowiek
+      send.py            # krok 5: send, skip, human_review
+    tools/
+      knowledge_base.py  # baza wektorowa Chroma
+      gmail_client.py    # odczyt maili z Gmaila
+  tests/
+    test_classify.py     # testy jednostkowe
+    test_graph.py        # testy całego agenta
+\end{lstlisting}
+
+\end{document}

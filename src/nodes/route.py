@@ -1,14 +1,7 @@
-"""Węzeł: decyzja routingu - auto-wysyłka czy przegląd człowieka.
-
-To jest serce logiki human-in-the-loop: agent NIE wysyła odpowiedzi
-automatycznie, jeśli pewność klasyfikacji jest zbyt niska albo kategoria
-jest oznaczona jako wrażliwa.
-"""
-
 from src.config import CATEGORIES, CONFIDENCE_THRESHOLD, SENSITIVE_CATEGORIES
 from src.state import TicketState
 
-
+#Przyjmuje aktualny stan grafu i na jego podstawie podejmuje decyzję dotyczącą dalszego przetwarzania zgłoszenia.
 def route_node(state: TicketState) -> TicketState:
     category = state.get("category", "inne")
     confidence = state.get("confidence", 0.0)
@@ -40,7 +33,7 @@ def route_node(state: TicketState) -> TicketState:
         "audit_log": audit_log,
     }
 
-
+#Odczytuje decyzję podjętą wcześniej przez route_node() i zwraca ją do LangGraph.
 def route_condition(state: TicketState) -> str:
     """Funkcja warunkowa używana przez LangGraph do wyboru kolejnej krawędzi."""
     return state["route_decision"]

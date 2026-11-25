@@ -1,5 +1,3 @@
-"""Węzeł: finalna wysyłka odpowiedzi (lub oznaczenie jako oczekująca)."""
-
 from langgraph.types import interrupt
 
 from src.state import TicketState
@@ -31,14 +29,6 @@ def skip_node(state: TicketState) -> TicketState:
 
 
 def human_review_node(state: TicketState) -> TicketState:
-    """Węzeł zatrzymujący graf do czasu decyzji człowieka.
-
-    Wywołuje `interrupt()` z LangGraph - zatrzymuje to wykonanie grafu
-    (status zgłoszenia pozostaje "pending_review" w oczach zewnętrznego
-    obserwatora) i czeka na input z zewnątrz, np. z UI w Streamlit
-    (`streamlit_app.py`). Wznowienie następuje wywołaniem grafu z
-    `Command(resume={"approved": bool, "edited_reply": str | None})`.
-    """
     decision = interrupt(
         {
             "ticket_id": state["ticket_id"],

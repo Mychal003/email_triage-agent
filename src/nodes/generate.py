@@ -1,5 +1,3 @@
-"""Węzeł: generowanie szkicu odpowiedzi na podstawie kontekstu."""
-
 from langchain_anthropic import ChatAnthropic
 
 from src.config import GENERATE_MODEL_NAME
@@ -45,7 +43,7 @@ def _extract_text(content) -> str:
         if isinstance(block, dict) and block.get("type") == "text"
     )
 
-
+#Przyjmuje aktualny stan grafu i zwraca jego zaktualizowaną wersję.
 def generate_node(state: TicketState) -> TicketState:
     context = "\n---\n".join(state.get("retrieved_context", [])) or "(brak)"
 

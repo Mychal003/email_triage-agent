@@ -29,11 +29,6 @@ _FALLBACK_CONFIDENCE = 0.0
 
 
 def _parse_json_response(content: str) -> dict:
-    """Modele czasem owijają odpowiedź w markdown code fence (```json ... ```)
-    albo dopisują tekst przed/po JSON-ie mimo instrukcji "tylko JSON" -
-    w szczególności zaobserwowano to na Haiku. Bierzemy fragment od
-    pierwszego `{` do ostatniego `}`. Rzuca ValueError, jeśli to nie jest
-    obiekt JSON."""
     start = content.find("{")
     end = content.rfind("}")
     if start == -1 or end < start:
@@ -46,10 +41,6 @@ def _parse_json_response(content: str) -> dict:
 
 
 def _normalize_category(raw) -> str | None:
-    """Sprowadza kategorię do postaci z CATEGORIES ("Zwrot pieniedzy" ->
-    "zwrot_pieniedzy"). Zwraca None dla kategorii spoza listy - bez tego
-    np. "Reklamacja" z wielkiej litery nie trafiłaby do SENSITIVE_CATEGORIES
-    i mogła zostać wysłana automatycznie."""
     if not isinstance(raw, str):
         return None
     category = raw.strip().lower().replace(" ", "_").replace("-", "_")
@@ -113,10 +104,6 @@ def classify_node(state: TicketState) -> TicketState:
         "audit_log": audit_log,
     }
 
-
+#podjecie decyzji do ktorego wezla powinien przejsc graf
 def classify_condition(state: TicketState) -> str:
-    """Spam/phishing nigdy nie dostaje odpowiedzi - pomija resztę grafu
-    (retrieve/generate/route/send), żeby nie marnować wywołań LLM i, co
-    ważniejsze, nigdy nie odpowiadać na wiadomość phishingową (odpowiedź
-    tylko potwierdza atakującemu, że skrzynka jest aktywna)."""
     return "spam" if state.get("category") == "spam" else "process"
